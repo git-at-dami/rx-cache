@@ -100,6 +100,38 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
         }
     }
 
+    /**
+     * Returns a Publisher that emits the current value for the given key (if present) and then completes.
+     * @param key The key to retrieve.
+     * @return A Publisher that will emit at most one value.
+     */
+    fun get(key: K): Publisher<V> = Publisher { subscriber ->
+        val value = cache[key]
+        subscriber.onSubscribe(object : Subscription {
+            private val requested = AtomicLong(0)
+            private val cancelled = AtomicBoolean(false)
+
+            override fun request(n: Long) {
+                if (cancelled.get()) return
+                if (n <= 0) {
+                    subscriber.onError(IllegalArgumentException("Demand must be positive"))
+                    cancel()
+                    return
+                }
+                if (requested.compareAndSet(0, 1)) { // Emit only once
+                    if (value != null) {
+                        subscriber.onNext(value)
+                    }
+                    subscriber.onComplete()
+                }
+            }
+
+            override fun cancel() {
+                cancelled.set(true)
+            }
+        })
+    }
+
 
     /**
      * Puts a key-value pair into the cache and notifies all active update subscribers.
@@ -121,7 +153,6 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
         if (cache.containsKey(key)) {
             cache.remove(key)
             subscribers.forEach { (_, subscription) ->
-                println("HEYY")
                 subscription.onNext(CacheUpdate.Delete(key))
             }
         }
