@@ -4,6 +4,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.reactivestreams.Subscriber
+import org.reactivestreams.Subscription
 
 class ReactiveCacheSubscriptionTest {
 
@@ -16,7 +17,7 @@ class ReactiveCacheSubscriptionTest {
 
             cache.subscribe(subscriber)
 
-            val capturedSubscription = org.mockito.kotlin.argumentCaptor<org.reactivestreams.Subscription>()
+            val capturedSubscription = org.mockito.kotlin.argumentCaptor<Subscription>()
             verify(subscriber).onSubscribe(capturedSubscription.capture())
             assertTrue(capturedSubscription.firstValue is ReactiveCache.CacheUpdateSubscription<*, *>, "Expected a CacheUpdateSubscription")
         }

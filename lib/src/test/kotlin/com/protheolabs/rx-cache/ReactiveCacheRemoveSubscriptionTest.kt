@@ -10,7 +10,7 @@ class ReactiveCacheRemoveSubscriptionTest {
     @Nested
     inner class When_removeUpdateSubscription_is_called {
         @Test
-        fun `it_should_remove_the_subscriber_from_the_updateSubscribers_map`() {
+        fun `it_should_remove_the_subscriber_from_the_listeners`() {
             val cache = ReactiveCache<String, Int>()
             val subscriber: Subscriber<CacheUpdate<String, Int>> = mock<Subscriber<CacheUpdate<String, Int>>>()
 
@@ -30,9 +30,9 @@ class ReactiveCacheRemoveSubscriptionTest {
     @Nested
     inner class When_cancel_is_called {
         @Test
-        fun `it_should_remove_the_subscriber_from_updateSubscribers`() {
+        fun `it_should_remove_the_subscriber_from_the_listeners`() {
             val cache = ReactiveCache<String, Int>()
-            val subscriber = mock<org.reactivestreams.Subscriber<CacheUpdate<String, Int>>>()
+            val subscriber = mock<Subscriber<CacheUpdate<String, Int>>>()
 
             cache.subscribe(subscriber)
 
@@ -46,7 +46,7 @@ class ReactiveCacheRemoveSubscriptionTest {
             val finalSubscriberCount = cache.getSubscribers().size
 
             assertTrue(finalSubscriberCount < initialSubscriberCount)
-            assertFalse(cache.getSubscribers().containsKey(subscriberKey), "Subscriber should no longer be in updateSubscribers")
+            assertFalse(cache.getSubscribers().containsKey(subscriberKey), "Subscriber should no longer be in subscribers")
         }
     }
 }
