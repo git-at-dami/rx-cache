@@ -53,12 +53,20 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
         private val publisher: ReactiveCache<K, V>
     ) : Subscription {
         private val isCancelled = AtomicBoolean(false)
+        private val requested = AtomicLong(0)
 
         /**
          * Requests a specific number of additional items from the Publisher.
-         * @param n The number of items to request. Must be positive.
+         * @param n The number of items to request. Must be positive. Subscription gets cancelled when n is negative
          */
         override fun request(n: Long) {
+            if (isCancelled.get()) return
+            if (n <= 0) {
+                subscriber.onError(IllegalArgumentException("Demand must be positive"))
+                cancel()
+                return
+            }
+            requested.getAndAdd(n)
         }
 
         /**
