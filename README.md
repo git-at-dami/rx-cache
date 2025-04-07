@@ -4,17 +4,17 @@ This library provides a simple in-memory reactive cache implemented using Kotlin
 
 ## Table of Contents
 
-1.  [Installation](#installation)
-2.  [Basic Usage](#basic-usage)
+1.  [Installation](#1-installation)
+2.  [Basic Usage](#2-basic-usage)
     * [Creating a `ReactiveCache`](#creating-a-reactivecache)
     * [Putting Items into the Cache](#putting-items-into-the-cache)
     * [Removing Items from the Cache](#removing-items-from-the-cache)
     * [Getting the Current Value as a Stream](#getting-the-current-value-as-a-stream)
     * [Subscribing to Cache Updates](#subscribing-to-cache-updates)
-3.  [Understanding `CacheUpdate`](#understanding-cacheupdate)
-4.  [Reactive Streams Compliance](#reactive-streams-compliance)
-5.  [Testing](#testing)
-6.  [Contributing](#contributing)
+3.  [Understanding `CacheUpdate`](#3-understanding-cacheupdate)
+4.  [Reactive Streams Compliance](#4-reactive-streams-compliance)
+5.  [Testing](#5-testing)
+6.  [Contributing](#6-contributing)
 
 ## 1. Installation
 
@@ -30,7 +30,7 @@ dependencies {
 
 ## 2. Basic Usage
 
-**Creating a ReactiveCache:**
+### Creating a ReactiveCache:
 
 
 ```kotlin
@@ -38,7 +38,7 @@ val cache = ReactiveCache<String, Int>()
 val userCache = ReactiveCache<Long, User>() // Assuming you have a User class
 ```
 
-**Putting Items into the Cache**
+### Putting Items into the Cache
 
 
 ```kotlin
@@ -46,7 +46,7 @@ cache.put("item1", 100)
 cache.put("item2", 200)
 ```
 
-**Removing Items from the Cache**
+### Removing Items from the Cache
 
 
 ```kotlin
@@ -54,7 +54,7 @@ cache.remove("item1")
 cache.remove("nonExistentItem") // Subscribers will not be notified
 ```
 
-**Getting the Current Value as a Stream**
+### Getting the Current Value as a Stream
 
 ```kotlin
     val item2ValuePublisher: Publisher<Int> = cache.get("item2")
@@ -68,7 +68,7 @@ cache.remove("nonExistentItem") // Subscribers will not be notified
     missingValuePublisher.subscribe { println("Missing value stream completed (no onNext)") }
 ```
 
-**Subscribing to Cache Updates**
+### Subscribing to Cache Updates
 
 ```kotlin
 cache.subscribe(object : Subscriber<CacheUpdate<String, Int>> {
