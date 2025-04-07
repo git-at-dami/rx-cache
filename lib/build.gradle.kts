@@ -30,7 +30,7 @@ dependencies {
     implementation(libs.guava)
 
     implementation("org.reactivestreams:reactive-streams:1.0.4")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 }
 
 testing {
