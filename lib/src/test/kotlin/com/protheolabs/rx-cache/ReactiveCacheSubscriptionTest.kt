@@ -3,6 +3,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.reactivestreams.Subscriber
 
 class ReactiveCacheSubscriptionTest {
 
@@ -11,7 +12,7 @@ class ReactiveCacheSubscriptionTest {
         @Test
         fun `it_should_call_onSubscribe_with_an_instance_of_CacheUpdateSubscription`() {
             val cache = ReactiveCache<String, Int>()
-            val subscriber = mock<org.reactivestreams.Subscriber<CacheUpdate<String, Int>>>()
+            val subscriber = mock<Subscriber<CacheUpdate<String, Int>>>()
 
             cache.subscribe(subscriber)
 

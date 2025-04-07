@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
     /**
-     * A map to store the currently active subscribers and their subscriptions for update events.
+    * A map to store the currently active subscribers and their subscriptions for update events.
      */
     private val updateSubscribers = ConcurrentHashMap<Subscriber<in CacheUpdate<K, V>>, CacheUpdateSubscription<K, V>>()
 
@@ -28,12 +28,32 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
     }
 
     /**
+     * Returns a read-only view of the current update subscribers.
+     * This is primarily for testing and monitoring.
+     */
+    internal fun getSubscribers(): Map<Subscriber<in CacheUpdate<K, V>>, CacheUpdateSubscription<K, V>> {
+        return updateSubscribers.toMap()
+    }
+
+        /**
+     * Removes a subscriber from the active update subscribers.
+     * This is called when a subscriber cancels their subscription.
+     * @param s The subscriber to remove.
+     */
+    internal fun removeUpdateSubscription(s: Subscriber<in CacheUpdate<K, V>>) {
+        updateSubscribers.remove(s)
+    }
+
+
+    /**
      * Represents the subscription between a Publisher (ReactiveCache) and a Subscriber for CacheUpdate events.
      */
     internal class CacheUpdateSubscription<K, V>(
         private val subscriber: Subscriber<in CacheUpdate<K, V>>,
         private val publisher: ReactiveCache<K, V>
     ) : Subscription {
+        private val isCancelled = AtomicBoolean(false)
+
         /**
          * Requests a specific number of additional items from the Publisher.
          * @param n The number of items to request. Must be positive.
@@ -45,6 +65,9 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
          * Cancels the subscription. The Publisher will eventually stop sending more items.
          */
         override fun cancel() {
+            if (isCancelled.compareAndSet(false, true)) {
+                publisher.removeUpdateSubscription(subscriber)
+            }
         }
     }
 }
