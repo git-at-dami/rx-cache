@@ -10,9 +10,14 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
     /**
+     * The underlying in-memory cache.
+     */
+    private val cache = ConcurrentHashMap<K, V>()
+
+    /**
     * A map to store the currently active subscribers and their subscriptions for update events.
      */
-    private val updateSubscribers = ConcurrentHashMap<Subscriber<in CacheUpdate<K, V>>, CacheUpdateSubscription<K, V>>()
+    private val subscribers = ConcurrentHashMap<Subscriber<in CacheUpdate<K, V>>, CacheUpdateSubscription<K, V>>()
 
     /**
      * Subscribes the given [Subscriber] to receive [CacheUpdate] events from this cache.
@@ -22,7 +27,7 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
         // Create a new subscription for this subscriber.
         val subscription = CacheUpdateSubscription(s, this)
         // Store the subscription.
-        updateSubscribers[s] = subscription
+        subscribers[s] = subscription
         // Notify the subscriber that the subscription has been established.
         s.onSubscribe(subscription)
     }
@@ -32,7 +37,7 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
      * This is primarily for testing and monitoring.
      */
     internal fun getSubscribers(): Map<Subscriber<in CacheUpdate<K, V>>, CacheUpdateSubscription<K, V>> {
-        return updateSubscribers.toMap()
+        return subscribers.toMap()
     }
 
         /**
@@ -41,7 +46,7 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
      * @param s The subscriber to remove.
      */
     internal fun removeUpdateSubscription(s: Subscriber<in CacheUpdate<K, V>>) {
-        updateSubscribers.remove(s)
+        subscribers.remove(s)
     }
 
 
@@ -69,6 +74,22 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
             requested.getAndAdd(n)
         }
 
+         /**
+         * Called by the Publisher to send the next item to the Subscriber.
+         * @param update The cache update event.
+         */
+        fun onNext(update: CacheUpdate<K, V>) {
+            if (!isCancelled.get()) {
+                val currentRequested = requested.get()
+                if (currentRequested > 0) {
+                    requested.decrementAndGet()
+                    subscriber.onNext(update)
+                } else {
+                    // No current demand, we might need to buffer or drop the update.
+                }
+            }
+        }
+
         /**
          * Cancels the subscription. The Publisher will eventually stop sending more items.
          */
@@ -78,4 +99,37 @@ class ReactiveCache<K, V> : Publisher<CacheUpdate<K, V>> {
             }
         }
     }
+
+
+    /**
+     * Puts a key-value pair into the cache and notifies all active update subscribers.
+     * @param key The key to put.
+     * @param value The value to associate with the key.
+     */
+    fun put(key: K, value: V) {
+        cache[key] = value
+        subscribers.forEach { (_, subscription) ->
+            subscription.onNext(CacheUpdate.Put(key, value))
+        }
+    }
+
+    /**
+     * Deletes an Item from the cache and notifies all active update subscribers only if the key was present.
+     * @param key The key to remove.
+     */
+    fun delete(key: K) {
+        if (cache.containsKey(key)) {
+            cache.remove(key)
+            subscribers.forEach { (_, subscription) ->
+                println("HEYY")
+                subscription.onNext(CacheUpdate.Delete(key))
+            }
+        }
+    }
+
+    /**
+     * Returns a snapshot of the current cache contents.
+     * @return An immutable map representing the current state of the cache.
+     */
+    fun getSnapshot(): Map<K, V> = cache.toMap()
 }
