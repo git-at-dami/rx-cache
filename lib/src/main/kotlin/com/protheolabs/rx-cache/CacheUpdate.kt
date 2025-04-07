@@ -10,8 +10,8 @@
     data class Put<K, V>(val key: K, val value: V) : CacheUpdate<K, V>()
 
         /**
-     * Represents removing a key from the cache.
-     * @param key The key being removed.
+     * Represents deleting an item from the cache.
+     * @param key The key of the item being deleted
      */
     data class Delete<K, V>(val key: K) : CacheUpdate<K, V>()
  }
